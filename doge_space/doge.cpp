@@ -12,7 +12,7 @@ class Player;
 const int DOGE_FRAME_SIZE = 150;
 const int MAX_DOGE = 8;
 const int SCREEN_WIDTH = 1200;
-const int SCREEN_HEIGHT = 1000;
+const int SCREEN_HEIGHT = 800;
 const int DISTANCE = 900;
 const int MAX_STAR = 500;
 
