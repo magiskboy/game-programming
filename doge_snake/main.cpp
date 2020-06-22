@@ -60,7 +60,7 @@ public:
 		if (!this->isDead && SDL_GetTicks() - this->last_update > SPEED){
 
 			if (this->blocks[0].x == block_food.x && this->blocks[0].y == block_food.y){
-			
+
 				// eat
 				Mix_PlayChannel( -1, eatSound, 0 );
 				score++;
@@ -73,7 +73,7 @@ public:
 				image_food = doge_image[rand()%MAX_IMAGE];
 			}
 
-			// check collision 
+			// check collision
 			// wall
 			SDL_Rect head = this->blocks[0];
 			if (head.x == 0 || head.y == 0 || head.x == MAP_WIDTH-1 || head.y == MAP_HEIGHT-1){
@@ -85,13 +85,13 @@ public:
 			while (i < this->blocks.size() && !this->isDead){
 				if (head.x == this->blocks[i].x && head.y == this->blocks[i].y){
 					this->isDead = true;
-				
+
 				}
 				++i;
 			}
 
 			// move
-		
+
 			this->last_block = this->blocks[this->blocks.size()-1];
 			for (int i = this->blocks.size()-1; i > 0; --i){
 				this->blocks[i] = this->blocks[i-1];
@@ -101,7 +101,7 @@ public:
 			this->last_update = SDL_GetTicks();
 		}
 	}
-	
+
 
 	void render(){
 		// draw snake
@@ -114,7 +114,7 @@ public:
 			}
 		}
 	}
-	
+
 	void handle(){
 		switch (evt.key.keysym.scancode){
 			case SDL_SCANCODE_LEFT:
@@ -144,7 +144,7 @@ public:
 	std::vector<SDL_Texture*> image;
 	std::vector<SDL_Rect> blocks;
 	SDL_Rect last_block;
-	bool isDead;	
+	bool isDead;
 	SDL_Point direction = {1, 0};
 	long int last_update;
 };
@@ -192,7 +192,7 @@ int init(){
 	bg = IMG_LoadTexture(rend, "bg.jpg");
 	font = TTF_OpenFont("font.ttf", 50);
 	bgSound = Mix_LoadMUS("doge.wav");
-	eatSound = Mix_LoadWAV("eat.wav");	
+	eatSound = Mix_LoadWAV("eat.wav");
 	Mix_PlayMusic( bgSound, -1 );
 	Mix_PauseMusic();
 	player = new Snake();
@@ -226,10 +226,10 @@ int handle(){
 
 int update(){
 	player->update();
-	
+
 	if (player->isDead){
 		Mix_ResumeMusic();
-	}	
+	}
 	else{
 		bgSound = Mix_LoadMUS( "doge.wav");
 		Mix_PlayMusic( bgSound, -1 );
@@ -258,7 +258,7 @@ int render(){
 	// draw wall
 	if (!player->isDead){
 		SDL_SetRenderDrawColor(rend, 0xff, 0xff, 0xff, 0xff);
-		
+
 		for (int i = 0; i < MAP_WIDTH; ++i){
 			SDL_Rect tile = {i*TILE_SIZE, 0, TILE_SIZE, TILE_SIZE};
 			// SDL_RenderFillRect(rend, &tile);
@@ -283,7 +283,7 @@ int render(){
 		rect.y *= TILE_SIZE;
 		SDL_RenderCopy(rend, image_food, NULL, &rect);
 
-		// draw score 
+		// draw score
 		std::stringstream ss;
 		ss << score;
 		SDL_Color cl = {0xff, 0xff, 0xff, 0xff};

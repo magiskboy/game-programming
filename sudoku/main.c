@@ -1,0 +1,6 @@
+#include "sudoku.h"
+
+
+int main(int argc, char** argv) {
+    return sudoku();
+}
