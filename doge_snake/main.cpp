@@ -16,24 +16,27 @@ const int SCREEN_WIDTH = MAP_WIDTH * TILE_SIZE + 150;
 const int SCREEN_HEIGHT = MAP_HEIGHT * TILE_SIZE;
 const char *TITLE = "Doge Snake";
 const int MAX_IMAGE = 5;
+const bool SHOW_GRID = false;
+const int FPS = 60;
+const int DEFAULT_SPEED = 120;
 
-int SPEED = 120;
+uint32_t TIME_PER_FRAME = (1 / FPS) * 1000;
 SDL_Window *wind = NULL;
 SDL_Renderer *rend = NULL;
 SDL_Event evt;
 
-bool isRunning;
-Snake *player;
+bool isRunning = false;
+bool isPause = false;
+Snake *player = NULL;
 std::vector<SDL_Texture *> doge_image;
-SDL_Texture *image_food;
-SDL_Texture *bg;
-std::vector<int> wall;
-// position in map
-SDL_Rect block_food = {0, 0, TILE_SIZE, TILE_SIZE};
-int score;
-TTF_Font *font;
+SDL_Texture *image_food = NULL;
+SDL_Texture *bg = NULL;
+TTF_Font *font = NULL;
 Mix_Music *bgSound = NULL;
 Mix_Chunk *eatSound = NULL;
+std::vector<int> wall;
+SDL_Rect block_food = {0, 0, TILE_SIZE, TILE_SIZE};
+int score = 0;
 
 int init();
 int update();
@@ -55,7 +58,7 @@ public:
   }
 
   void update() {
-    if (!this->isDead && SDL_GetTicks() - this->last_update > SPEED) {
+    if (!this->isDead && SDL_GetTicks() - this->last_update > this->speed) {
 
       if (this->blocks[0].x == block_food.x &&
           this->blocks[0].y == block_food.y) {
@@ -64,8 +67,8 @@ public:
         Mix_PlayChannel(-1, eatSound, 0);
         score++;
         if (score % 10 == 0) {
-          if (SPEED > 20)
-            SPEED -= 20;
+          if (this->speed > 20)
+            this->speed -= 20;
         }
         this->add_block();
         // generate food
@@ -92,7 +95,6 @@ public:
       }
 
       // move
-
       this->last_block = this->blocks[this->blocks.size() - 1];
       for (int i = this->blocks.size() - 1; i > 0; --i) {
         this->blocks[i] = this->blocks[i - 1];
@@ -146,6 +148,7 @@ public:
   bool isDead;
   SDL_Point direction = {1, 0};
   long int last_update;
+  int speed = DEFAULT_SPEED;
 };
 
 int init() {
@@ -212,13 +215,19 @@ int handle() {
   if (SDL_PollEvent(&evt) > 0) {
     isRunning = not(evt.type == SDL_QUIT);
     if (evt.type == SDL_KEYDOWN) {
-      isRunning = not(evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE);
-      player->handle();
-      if (evt.key.keysym.scancode == SDL_SCANCODE_RETURN && player->isDead) {
-        score = 0;
-        delete player;
-        player = new Snake();
+      int key_code = evt.key.keysym.scancode;
+      if (key_code == SDL_SCANCODE_ESCAPE) {
+        isRunning = false;
+      } else if (key_code == SDL_SCANCODE_RETURN) {
+        if (player->isDead) {
+          score = 0;
+          delete player;
+          player = new Snake();
+        } else {
+          isPause = !isPause;
+        }
       }
+      player->handle();
     }
     return 0;
   }
@@ -240,15 +249,16 @@ int render() {
   SDL_RenderClear(rend);
 
   // draw grid map
-  /* SDL_SetRenderDrawColor(rend, 0x00, 0xff, 0x00, 0xff); */
-  /* for (int i = 0; i < MAP_WIDTH + 1; ++i) { */
-  /*   SDL_RenderDrawLine(rend, i * TILE_SIZE, 0, i * TILE_SIZE, SCREEN_HEIGHT);
-   */
-  /* } */
-  /* for (int i = 0; i < MAP_HEIGHT; ++i) { */
-  /*   SDL_RenderDrawLine(rend, 0, i * TILE_SIZE, MAP_WIDTH * TILE_SIZE, */
-  /*                      i * TILE_SIZE); */
-  /* } */
+  if (SHOW_GRID) {
+    SDL_SetRenderDrawColor(rend, 0x00, 0xff, 0x00, 0xff);
+    for (int i = 0; i < MAP_WIDTH + 1; ++i) {
+      SDL_RenderDrawLine(rend, i * TILE_SIZE, 0, i * TILE_SIZE, SCREEN_HEIGHT);
+    }
+    for (int i = 0; i < MAP_HEIGHT; ++i) {
+      SDL_RenderDrawLine(rend, 0, i * TILE_SIZE, MAP_WIDTH * TILE_SIZE,
+                         i * TILE_SIZE);
+    }
+  }
 
   if (!player->isDead) {
     SDL_SetRenderDrawColor(rend, 0xff, 0xff, 0xff, 0xff);
@@ -310,13 +320,21 @@ int exit() {
 
 int main(int argc, char *argv[]) {
   std::cout << "Doge Snake" << std::endl;
-
   if (init() == -1)
     return -1;
 
+  uint32_t last_tick = 0;
   while (isRunning) {
-    update();
-    render();
+    uint32_t elaps = SDL_GetTicks() - last_tick;
+    if (elaps < TIME_PER_FRAME) {
+      SDL_Delay(TIME_PER_FRAME - elaps);
+    }
+    last_tick = SDL_GetTicks();
+
+    if (!isPause) {
+      update();
+      render();
+    }
     handle();
   }
   exit();
